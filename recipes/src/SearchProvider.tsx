@@ -20,10 +20,10 @@ const SearchProvider = (props) => {
     credentials: "same-origin",
   });
 
-  const { term, page } = state;
+  const { term, page, ingredients } = state;
 
   useEffect(() => {
-    console.log("here", { term });
+    console.log("here", { term, ingredients });
 
     getResults();
   }, [term, page]);
@@ -37,6 +37,7 @@ const SearchProvider = (props) => {
     const searchParams = new URLSearchParams({
       q: term,
       p: page,
+      i: ingredients.map((val) => val.inputValue).join(","),
     });
 
     await get(`/?${searchParams.toString()}`);

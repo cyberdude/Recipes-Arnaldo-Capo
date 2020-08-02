@@ -4,7 +4,9 @@ const SET_RECIPES = "search/SET_RECIPES";
 const SEARCH_LOADING_INDICATOR = "search/SEARCH_LOADING_INDICATOR";
 const SET_SEARCH_QUERY = "search/SET_SEARCH_QUERY";
 const SET_PAGE_NUMBER = "search/SET_PAGE_NUMBER";
+const SET_INGREDIENTS = "search/SET_INGREDIENTS";
 const PERSIST_KEY = "recipe_store";
+
 // interface LoadUsersAction {
 //   type: typeof LOAD_USERS;
 //   users: User[];
@@ -29,12 +31,14 @@ type State = {
   recipes: Recipe[];
   term: string;
   page: number;
+  ingredients: any[];
 };
 
 export const initialState: State = {
   recipes: [],
   term: "",
   page: 1,
+  ingredients: [],
 };
 
 export const reducer = (state: State, action: any) => {
@@ -65,6 +69,12 @@ export const reducer = (state: State, action: any) => {
         page: action.page,
       };
 
+    case SET_INGREDIENTS:
+      return {
+        ...state,
+        ingredients: [...state.ingredients, ...action.ingredients],
+      };
+
     default:
       throw new Error("Invalid Search action.");
   }
@@ -83,4 +93,9 @@ export const setSearchTerm = (term: string) => ({
 export const setPageNumber = (page: number) => ({
   type: SET_PAGE_NUMBER,
   page,
+});
+
+export const setIngredients = (ingredients: []) => ({
+  type: SET_INGREDIENTS,
+  ingredients,
 });
