@@ -1,34 +1,40 @@
 import React, { useState, useReducer, useContext } from "react";
 import {
   makeStyles,
-  createStyles,
-  Theme,
-  fade,
   InputBase,
   Paper,
-  IconButton,
   Button,
   TextField,
 } from "@material-ui/core";
+
 import Autocomplete, {
   createFilterOptions,
 } from "@material-ui/lab/Autocomplete";
+
 import SearchIcon from "@material-ui/icons/Search";
-import useFetch, { Provider } from "use-http";
-import { Recipe } from "../../src/AppTypes";
+import { Ingredient } from "../../src/AppTypes";
 import { Context } from "../../src/SearchProvider";
 import {
-  setRecipes,
   setSearchTerm,
   setIngredients,
+  setPageNumber,
 } from "../../src/SearchReducer";
 import IngredientsData from "../../public/ingredients.json";
+import { useStorageState } from "react-storage-hooks";
 
 const filter = createFilterOptions();
 
-let { tags: ingredients = [] } = IngredientsData;
+// Adding this autocomplete "db" for demo purpose only
+// This should be an API aync call
+let { tags: ingredients = [] } = (IngredientsData as {
+  tags: Ingredient[];
+}) || { tags: [] as Ingredient[] };
 
-ingredients = ingredients.splice(0, 100).map((ingredient) => ingredient.name);
+ingredients = ingredients.splice(0, 100).map((ingredient: Ingredient) => {
+  ingredient.label = ingredient.name;
+  return ingredient;
+}) as Ingredient[];
+//  end
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -36,7 +42,7 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     alignItems: "center",
     width: 400,
-    margin: 20,
+    margin: "20px auto",
     position: "relative",
     scale: 1.1,
   },
@@ -45,16 +51,15 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
   },
   iconButton: {
-    // padding: 10,
     position: "absolute",
     right: 0,
     width: 20,
     backgroundColor: theme.palette.grey[200],
     borderRadius: 0,
   },
-  divider: {
-    height: 28,
-    margin: 4,
+  ingredients: {
+    margin: `0 auto ${theme.spacing(2)}px`,
+    backgroundColor: "white",
   },
 }));
 
@@ -62,24 +67,44 @@ const Search = () => {
   const classes = useStyles();
   const { state, dispatch } = useContext(Context);
 
-  const [inputTerm, setInputTerm] = useState("");
-  const [value, setValue] = useState([]);
+  const [inputTerm, setInputTerm] = useStorageState(
+    globalThis.localStorage,
+    "set-input-term",
+    ""
+  );
+  const [value, setValue] = useStorageState<Ingredient[]>(
+    globalThis.localStorage,
+    "ingredients",
+    [
+      {
+        name: "",
+        label: "",
+        inputValue: "",
+      },
+    ]
+  );
 
   React.useEffect(() => {
-    console.log({ value });
     dispatch(setIngredients(value));
+    dispatch(setPageNumber(1));
   }, [value]);
 
   const handleSubmit = (event: React.FormEvent<HTMLDivElement>) => {
     event.preventDefault();
-    console.log({ inputTerm });
     dispatch(setSearchTerm(inputTerm));
   };
 
   const handleTermChange = (
     event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => {
-    setInputTerm((event.target as HTMLInputElement).value);
+    const newValue = (event.target as HTMLInputElement).value;
+    setInputTerm((prevState) => {
+      if (prevState !== newValue) {
+        dispatch(setPageNumber(1));
+      }
+
+      return newValue;
+    });
   };
 
   return (
@@ -103,61 +128,49 @@ const Search = () => {
 
       <Autocomplete
         value={value}
-        multiple
-        onChange={(event, newValue) => {
+        size="small"
+        className={classes.ingredients}
+        onChange={(_, newValue) => {
           if (typeof newValue === "string") {
-            setValue({
-              name: newValue,
-            });
-          } else if (newValue && newValue.inputValue) {
-            // Create a new value from the user input
-            setValue({
-              name: newValue.inputValue,
-            });
+            setValue([
+              {
+                label: newValue,
+              },
+            ]);
           } else {
-            setValue(newValue);
+            setValue(newValue as Ingredient[]);
           }
         }}
         filterOptions={(options, params) => {
           const filtered = filter(options, params);
 
-          // Suggest the creation of a new value
           if (params.inputValue !== "") {
             filtered.push({
-              inputValue: params.inputValue,
+              label: params.inputValue,
               name: `Add "${params.inputValue}"`,
             });
           }
 
           return filtered;
         }}
-        selectOnFocus
-        clearOnBlur
-        handleHomeEndKeys
-        id="free-solo-with-text-demo"
         options={ingredients}
-        getOptionLabel={(option) => {
-          // Value selected with enter, right from the input
-          if (typeof option === "string") {
-            return option;
-          }
-          // Add "xxx" option created dynamically
-          if (option.inputValue) {
-            return option.inputValue;
-          }
-          // Regular option
-          return option.name;
-        }}
-        renderOption={(option) => option.name}
+        getOptionLabel={(option) => option.label}
+        renderOption={(option) => option.label}
         style={{ width: 300 }}
+        renderInput={(params) => {
+          return (
+            <TextField
+              {...params}
+              label="Filter by ingredients"
+              variant="outlined"
+            />
+          );
+        }}
         freeSolo
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Free solo with text demo"
-            variant="outlined"
-          />
-        )}
+        multiple
+        clearOnBlur
+        selectOnFocus
+        handleHomeEndKeys
       />
     </>
   );

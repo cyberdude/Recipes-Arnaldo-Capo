@@ -1,19 +1,26 @@
 import React, { useReducer, useEffect, Dispatch } from "react";
 import { reducer, initialState, setRecipes } from "./SearchReducer";
-import { Recipe } from "./AppTypes";
+import { Recipe, Ingredient } from "./AppTypes";
 import useFetch from "use-http";
-import useLocallyPersistedReducer from "../src/customReducer";
+import { useStorageReducer } from "react-storage-hooks";
 
 export const Context = React.createContext<
   Partial<{
     state: any;
     dispatch: Dispatch<any>;
     recipes: Recipe[];
+    recipeLoading: boolean;
   }>
 >({});
 
 const SearchProvider = (props) => {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useStorageReducer(
+    globalThis.localStorage,
+    "search-reducer",
+    reducer,
+    initialState
+  );
+
   const { get, response, loading: recipeLoading, error } = useFetch<{
     results: Recipe[];
   }>("http://localhost:3000/api", {
@@ -23,22 +30,26 @@ const SearchProvider = (props) => {
   const { term, page, ingredients } = state;
 
   useEffect(() => {
-    console.log("here", { term, ingredients });
-
     getResults();
-  }, [term, page]);
+  }, [term, page, ingredients]);
 
   const getResults = async () => {
-    console.log(term);
     if (!term) {
       return;
     }
 
-    const searchParams = new URLSearchParams({
+    const searchParamsValues: { q: string; p: string; i?: string } = {
       q: term,
       p: page,
-      i: ingredients.map((val) => val.inputValue).join(","),
-    });
+    };
+
+    if (ingredients.length) {
+      searchParamsValues.i = ingredients
+        .map((val: Ingredient) => val.label)
+        .join(",");
+    }
+
+    const searchParams = new URLSearchParams(searchParamsValues);
 
     await get(`/?${searchParams.toString()}`);
 
@@ -53,6 +64,7 @@ const SearchProvider = (props) => {
         state,
         dispatch,
         recipes: state.recipes,
+        recipeLoading,
       }}
     >
       {props.children}

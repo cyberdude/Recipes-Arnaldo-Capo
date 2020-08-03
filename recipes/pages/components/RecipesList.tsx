@@ -2,12 +2,12 @@ import React, { useReducer, useContext } from "react";
 import {
   List,
   ListItem,
-  ListItemText,
   createStyles,
   makeStyles,
-  Paper,
+  CircularProgress,
+  Typography,
 } from "@material-ui/core";
-import { reducer, initialState, setPageNumber } from "../../src/SearchReducer";
+import { setPageNumber } from "../../src/SearchReducer";
 import { Context } from "../../src/SearchProvider";
 import { Recipe } from "../../src/AppTypes";
 import InfiniteScroll from "react-infinite-scroll-component";
@@ -15,21 +15,37 @@ import RecipeCard from "./RecipeCard";
 
 const useStyles = makeStyles(() =>
   createStyles({
-    root: {},
     recipeListItem: {
       alignSelf: "center",
       display: "list-item",
       maxWidth: 800,
       margin: "auto",
     },
+    loader: {
+      display: "block",
+      margin: "30px auto",
+    },
+    noSearch: {
+      marginTop: 20,
+    },
   })
 );
 
 const RecipesList = () => {
-  const { state, dispatch, recipes = [] } = useContext(Context);
+  const { state, dispatch, recipes = [], recipeLoading } = useContext(Context);
   const classes = useStyles();
 
-  const { page } = state;
+  const { page, term } = state;
+
+  if (!term) {
+    return (
+      <Typography component="h3" align="center" className={classes.noSearch}>
+        Please search for delicious foodies.
+      </Typography>
+    );
+  }
+
+  const hasMore = Boolean(recipes.length * page >= recipes.length);
 
   return (
     <InfiniteScroll
@@ -37,15 +53,17 @@ const RecipesList = () => {
       next={() => {
         dispatch(setPageNumber(page + 1));
       }}
-      hasMore={true}
-      loader={<h4>Loading...</h4>}
+      hasMore={hasMore}
+      loader={
+        recipeLoading ? <CircularProgress className={classes.loader} /> : null
+      }
       endMessage={
-        <p style={{ textAlign: "center" }}>
-          <b>All loaded.</b>
-        </p>
+        <Typography component="h4" align="center">
+          All loaded.
+        </Typography>
       }
     >
-      <List className={classes.root}>
+      <List>
         {recipes.map((recipe: Recipe, index: number) => (
           <ListItem key={index} className={classes.recipeListItem}>
             <RecipeCard recipe={recipe} />

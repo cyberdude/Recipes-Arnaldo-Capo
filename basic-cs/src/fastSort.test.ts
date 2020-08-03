@@ -1,13 +1,20 @@
 import { fastSort, powSort } from "./fastSort";
 import { randomIntFromRange } from "./helpers";
+import moment from "moment";
 
-function clock(start?: any): any {
+const clock = (start?: any): any => {
   if (!start) {
     return process.hrtime();
   }
   var end = process.hrtime(start);
   return Math.round(end[0] * 1000 + end[1] / 1000000);
-}
+};
+
+const getEstimatedRunTimeInWeeks = (
+  targetOperations: number,
+  sampleSize: number,
+  duration: number
+): number => (targetOperations - sampleSize) * duration;
 
 describe("fastSort tests", () => {
   test("should sort 11 small numbers (<100)", () => {
@@ -19,21 +26,27 @@ describe("fastSort tests", () => {
     }
 
     console.log("Small numbers generated: ", smallNumbers);
-    // fastSort(smallNumbers);
-    var start = clock();
-    // do some processing that takes time
+
+    const start = clock();
+
     for (let x = 0; x < SMALL_NUMBERS_SAMPLE_PROFILE; x++) {
       fastSort(smallNumbers);
     }
-    var duration = clock(start);
+    const duration = clock(start);
 
     const targetOperations = Math.pow(10, 10);
 
-    console.log(
-      "It will take ",
-      ((targetOperations - SMALL_NUMBERS_SAMPLE_PROFILE) * duration) as number
+    const estimatedDuration = getEstimatedRunTimeInWeeks(
+      targetOperations,
+      SMALL_NUMBERS_SAMPLE_PROFILE,
+      duration
     );
-    console.log("Took " + duration + "ms");
+
+    var diff = moment.duration(estimatedDuration);
+
+    console.log(
+      `It will take ${diff.asYears()} years to complete ${targetOperations} operations.`
+    );
   });
 
   test("it should sort 10000 random pows", () => {
@@ -49,20 +62,24 @@ describe("fastSort tests", () => {
       ]);
     }
 
-    var start = clock();
-
-    // do some processing that takes time
+    const start = clock();
     for (let x = 0; x < TEST_SAMPLE_SIZE; x++) {
       powSort(randomPows);
     }
-    var duration = clock(start);
+    const duration = clock(start);
 
-    const targetOperations = Math.pow(10, 10);
+    const targetOperations = POW_SAMPLE_SIZE;
+
+    const estimatedDuration = getEstimatedRunTimeInWeeks(
+      targetOperations,
+      TEST_SAMPLE_SIZE,
+      duration
+    );
+    var diff = moment.duration(estimatedDuration);
 
     console.log(
-      "It will take ",
-      ((targetOperations - TEST_SAMPLE_SIZE) * duration) as number
+      "Sorting pows",
+      `It will take ${diff.asHours()} hours to complete ${targetOperations} operations.`
     );
-    console.log("Took " + duration + "ms");
   });
 });

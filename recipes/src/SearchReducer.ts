@@ -1,37 +1,16 @@
-import { Recipe } from "./AppTypes";
+import { Recipe, Ingredient } from "./AppTypes";
 
 const SET_RECIPES = "search/SET_RECIPES";
 const SEARCH_LOADING_INDICATOR = "search/SEARCH_LOADING_INDICATOR";
 const SET_SEARCH_QUERY = "search/SET_SEARCH_QUERY";
 const SET_PAGE_NUMBER = "search/SET_PAGE_NUMBER";
 const SET_INGREDIENTS = "search/SET_INGREDIENTS";
-const PERSIST_KEY = "recipe_store";
-
-// interface LoadUsersAction {
-//   type: typeof LOAD_USERS;
-//   users: User[];
-// }
-
-// interface UserLoadingIndicatorAction {
-//   type: typeof USER_LOADING_INDICATOR;
-//   loading: boolean;
-// }
-
-// interface AddMessagesAction {
-//   type: typeof ADD_MESSAGES;
-//   messages: string[];
-// }
-
-// export type RecipesAction =
-//   | LoadUsersAction
-//   | UserLoadingIndicatorAction
-//   | AddMessagesAction;
 
 type State = {
   recipes: Recipe[];
   term: string;
   page: number;
-  ingredients: any[];
+  ingredients: Ingredient[];
 };
 
 export const initialState: State = {
@@ -42,13 +21,14 @@ export const initialState: State = {
 };
 
 export const reducer = (state: State, action: any) => {
-  console.log({ action });
-
   switch (action.type) {
     case SET_RECIPES:
       return {
         ...state,
-        recipes: [...state.recipes, ...action.recipes],
+        recipes:
+          state.page > 1
+            ? [...state.recipes, ...action.recipes]
+            : action.recipes,
       };
 
     case SEARCH_LOADING_INDICATOR:
@@ -72,7 +52,7 @@ export const reducer = (state: State, action: any) => {
     case SET_INGREDIENTS:
       return {
         ...state,
-        ingredients: [...state.ingredients, ...action.ingredients],
+        ingredients: action.ingredients,
       };
 
     default:
@@ -95,7 +75,7 @@ export const setPageNumber = (page: number) => ({
   page,
 });
 
-export const setIngredients = (ingredients: []) => ({
+export const setIngredients = (ingredients: Ingredient[]) => ({
   type: SET_INGREDIENTS,
   ingredients,
 });

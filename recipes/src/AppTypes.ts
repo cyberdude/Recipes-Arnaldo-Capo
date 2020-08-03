@@ -4,3 +4,12 @@ export type Recipe = {
   ingredients: string;
   thumbnail: string;
 };
+
+type AutoCompleteIngredientNewOptions = {
+  inputValue?: string;
+};
+
+export type Ingredient = {
+  name?: string;
+  label?: string;
+} & AutoCompleteIngredientNewOptions;
