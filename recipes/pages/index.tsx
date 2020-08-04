@@ -16,13 +16,8 @@ export default function Index() {
 
   return (
     <SearchProvider>
-      <Grid
-        container
-        justify="center"
-        alignItems="center"
-        className={classes.root}
-      >
-        <Grid item xs={12} alignItems="center">
+      <Grid container justify="center" className={classes.root}>
+        <Grid item xs={12}>
           <Search />
         </Grid>
         <Grid item xs={12}>
